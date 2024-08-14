@@ -12,3 +12,7 @@ format:
 
 lint:
     cargo clippy -q --all-targets --all-features
+
+# Init db
+init-db:
+    SKIP_DOCKER=true ./scripts/init_db.sh
