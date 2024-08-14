@@ -1,7 +1,13 @@
 use std::net::TcpListener;
 
 use actix_web::dev::Server;
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{web, App, HttpServer};
+
+use routes::{health_check, subscribe};
+
+pub mod configuration;
+pub mod routes;
+pub mod startup;
 
 pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
     let server = HttpServer::new(|| {
@@ -13,12 +19,4 @@ pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
     .run();
 
     Ok(server)
-}
-
-async fn health_check() -> impl Responder {
-    HttpResponse::Ok().finish()
-}
-
-async fn subscribe() -> impl Responder {
-    HttpResponse::Ok().finish()
 }
