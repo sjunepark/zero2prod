@@ -1,3 +1,5 @@
+.sqlx
+
 ### dotenv template
 # The book recommends to commit the .env file in page 69
 #.env
