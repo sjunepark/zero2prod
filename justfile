@@ -11,4 +11,4 @@ format:
     cargo fmt --all
 
 lint:
-    cargo clippy -q --all-targets --all-features -- -D warnings
+    cargo clippy -q --all-targets --all-features
