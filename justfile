@@ -5,14 +5,10 @@ watch:
     cargo watch -q -c -s 'just test' -s 'just format' -s 'just lint'
 
 test:
-    cargo test --all-features
+    TEST_LOG=ture cargo test --all-features | bunyan
 
 format:
     cargo fmt --all
 
 lint:
     cargo clippy -q --all-targets --all-features
-
-# Init db
-init-db:
-    SKIP_DOCKER=true ./scripts/init_db.sh
