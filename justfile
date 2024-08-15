@@ -5,7 +5,7 @@ watch:
     cargo watch -q -c -s 'just test' -s 'just format' -s 'just lint'
 
 test:
-    TEST_LOG=ture cargo test --all-features | bunyan
+    TEST_LOG=true cargo test --all-features | bunyan
 
 format:
     cargo fmt --all
