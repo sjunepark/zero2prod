@@ -18,6 +18,12 @@ lint:
 init-db:
     ./scripts/init_db.sh
 
+migrate-db:
+    sqlx migrate run
+
+migrate-db-revert:
+    sqlx migrate revert
+
 sqlx-prepare:
     cargo sqlx prepare --workspace
 
@@ -25,4 +31,7 @@ docker-build: sqlx-prepare
     docker build -t zero2prod --file Dockerfile .
 
 doctl-update:
-    doctl apps update $DIGITAL_OCEAN_APP_ID --spec spec.yaml
+    doctl apps update $DO_APP_ID --spec spec.yaml
+
+do-migrate:
+    DATABASE_URL=$DO_DATABASE_URL sqlx migrate run
