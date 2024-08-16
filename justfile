@@ -4,7 +4,7 @@ default:
     just -l
 
 watch:
-    cargo watch -q -c -s 'just test' -s 'just format' -s 'just lint'
+    cargo watch -q -c -s 'just test'
 
 test:
     cargo test --all-features | bunyan
