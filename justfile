@@ -1,3 +1,5 @@
+set dotenv-filename := ".env"
+
 default:
     just -l
 
@@ -21,3 +23,6 @@ sqlx-prepare:
 
 docker-build: sqlx-prepare
     docker build -t zero2prod --file Dockerfile .
+
+doctl-update:
+    doctl apps update $DIGITAL_OCEAN_APP_ID --spec spec.yaml
