@@ -1,6 +1,6 @@
 CREATE SCHEMA core;
 
-CREATE TABLE core.subscriptions
+CREATE TABLE subscriptions
 (
     id            uuid        NOT NULL,
     PRIMARY KEY (id),

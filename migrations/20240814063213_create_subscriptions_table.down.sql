@@ -1,3 +1,3 @@
-DROP TABLE IF EXISTS core.subscriptions;
+DROP TABLE IF EXISTS subscriptions;
 
 DROP SCHEMA IF EXISTS core;
