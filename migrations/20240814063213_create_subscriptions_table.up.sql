@@ -1,5 +1,3 @@
-CREATE SCHEMA core;
-
 CREATE TABLE subscriptions
 (
     id            uuid        NOT NULL,
