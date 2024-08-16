@@ -1,4 +1,4 @@
-mod utils;
+pub mod utils;
 
 #[tokio::test]
 async fn health_check_works() {
