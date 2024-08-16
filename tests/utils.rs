@@ -2,7 +2,7 @@ use std::net::TcpListener;
 use std::sync::LazyLock;
 
 use sqlx::postgres::PgPoolOptions;
-use sqlx::{Connection, Executor, PgPool};
+use sqlx::{Executor, PgPool};
 use uuid::Uuid;
 
 use zero2prod::configuration::{get_configuration, DatabaseSettings};
