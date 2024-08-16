@@ -12,3 +12,9 @@ format:
 
 lint:
     cargo clippy -q --all-targets --all-features
+
+sqlx-prepare:
+    cargo sqlx prepare --workspace
+
+docker-build: sqlx-prepare
+    docker build -t zero2prod --file Dockerfile .
