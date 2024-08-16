@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n    INSERT INTO subscriptions (id, email, name, subscribed_at)\n    VALUES ($1, $2, $3, $4)\n    ",
+  "query": "\n    INSERT INTO core.subscriptions (id, email, name, subscribed_at)\n    VALUES ($1, $2, $3, $4)\n    ",
   "describe": {
     "columns": [],
     "parameters": {
@@ -13,5 +13,5 @@
     },
     "nullable": []
   },
-  "hash": "4a1c526df578752272a05ab0ced36ca13d96ac8aae0c2f60038e181831312065"
+  "hash": "2cdf73c97a8f102d2227989e8099d5f36649b15e0c6340bfcf08bfcfe55f7062"
 }
