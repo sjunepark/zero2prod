@@ -30,7 +30,7 @@ sqlx-prepare:
 docker-build: sqlx-prepare
     docker build -t zero2prod --file Dockerfile .
 
-doctl-update:
+doctl-update: sqlx-prepare
     doctl apps update $DO_APP_ID --spec spec.yaml
 
 do-migrate:
