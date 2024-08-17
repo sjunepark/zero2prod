@@ -19,6 +19,9 @@ unicode-segmentation = "1.11.0"
 unicode_categories = "0.1.1"
 validator = { version = "0.18.1", features = ["derive"] }
 fake = "2.9.2"
+rand = "0.8.5"
+quickcheck = "1.0.3"
+quickcheck_macros = "1.0.0"
 
 config = "0.14.0"
 tracing = { version = "0.1.40", features = ["log"] }
