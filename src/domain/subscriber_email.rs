@@ -26,9 +26,17 @@ impl AsRef<str> for SubscriberEmail {
 
 #[cfg(test)]
 mod tests {
-    use claims::assert_err;
+    use claims::{assert_err, assert_ok};
+    use fake::faker::internet::en::SafeEmail;
+    use fake::Fake;
 
     use super::*;
+
+    #[test]
+    fn valid_email_is_parsed_successfully() {
+        let email = SafeEmail().fake::<String>();
+        assert_ok!(SubscriberEmail::parse(email));
+    }
 
     #[test]
     fn empty_string_is_rejected() {
