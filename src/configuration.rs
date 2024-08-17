@@ -3,16 +3,44 @@ use serde::Deserialize;
 use sqlx::postgres::{PgConnectOptions, PgSslMode};
 use sqlx::ConnectOptions;
 
+use crate::domain::SubscriberEmail;
+
+pub fn get_configuration() -> Result<Settings, config::ConfigError> {
+    let base_path = std::env::current_dir().expect("Failed to determine the current directory");
+    let configuration_directory = base_path.join("configuration");
+
+    let environment: Environment = std::env::var("APP_ENVIRONMENT")
+        .unwrap_or_else(|_| "local".into())
+        .try_into()
+        .expect("Failed to parse APP_ENVIRONMENT");
+    let environment_filename = format!("{}.yaml", environment.as_str());
+
+    let settings = config::Config::builder()
+        .add_source(config::File::from(
+            configuration_directory.join("base.yaml"),
+        ))
+        .add_source(config::File::from(
+            configuration_directory.join(environment_filename),
+        ))
+        // Add in settings from environment variables (with a prefix of APP and
+        // '__' as separator)
+        // E.g. `APP_APPLICATION__PORT=5001 would set `Settings.application.port`
+        .add_source(
+            config::Environment::with_prefix("APP")
+                .prefix_separator("_")
+                .separator("__")
+                .try_parsing(true),
+        )
+        .build()?;
+
+    settings.try_deserialize::<Settings>()
+}
+
 #[derive(Deserialize)]
 pub struct Settings {
     pub database: DatabaseSettings,
     pub application: ApplicationSettings,
-}
-
-#[derive(Deserialize)]
-pub struct ApplicationSettings {
-    pub port: u16,
-    pub host: String,
+    pub email_client: EmailClientSettings,
 }
 
 #[derive(Deserialize)]
@@ -47,35 +75,22 @@ impl DatabaseSettings {
     }
 }
 
-pub fn get_configuration() -> Result<Settings, config::ConfigError> {
-    let base_path = std::env::current_dir().expect("Failed to determine the current directory");
-    let configuration_directory = base_path.join("configuration");
+#[derive(Deserialize)]
+pub struct ApplicationSettings {
+    pub port: u16,
+    pub host: String,
+}
 
-    let environment: Environment = std::env::var("APP_ENVIRONMENT")
-        .unwrap_or_else(|_| "local".into())
-        .try_into()
-        .expect("Failed to parse APP_ENVIRONMENT");
-    let environment_filename = format!("{}.yaml", environment.as_str());
+#[derive(Deserialize)]
+pub struct EmailClientSettings {
+    pub base_url: String,
+    pub sender_email: String,
+}
 
-    let settings = config::Config::builder()
-        .add_source(config::File::from(
-            configuration_directory.join("base.yaml"),
-        ))
-        .add_source(config::File::from(
-            configuration_directory.join(environment_filename),
-        ))
-        // Add in settings from environment variables (with a prefix of APP and
-        // '__' as separator)
-        // E.g. `APP_APPLICATION__PORT=5001 would set `Settings.application.port`
-        .add_source(
-            config::Environment::with_prefix("APP")
-                .prefix_separator("_")
-                .separator("__")
-                .try_parsing(true),
-        )
-        .build()?;
-
-    settings.try_deserialize::<Settings>()
+impl EmailClientSettings {
+    pub fn sender(&self) -> Result<SubscriberEmail, String> {
+        SubscriberEmail::parse(self.sender_email.clone())
+    }
 }
 
 pub enum Environment {
