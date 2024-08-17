@@ -84,12 +84,31 @@ mod tests {
     use crate::domain::SubscriberEmail;
     use crate::email_client::EmailClient;
 
+    // Generate a random email subject
+    fn subject() -> String {
+        Sentence(1..2).fake()
+    }
+
+    // Generate a random email content
+    fn content() -> String {
+        Paragraph(1..10).fake()
+    }
+
+    // Generate a random subscriber email
+    fn email() -> SubscriberEmail {
+        SubscriberEmail::parse(SafeEmail().fake::<String>()).unwrap()
+    }
+
+    // Get a test instance of `EmailClient`
+    fn email_client(base_url: &str) -> EmailClient {
+        EmailClient::new(base_url.into(), email(), Secret::new(Faker.fake()))
+    }
+
     #[tokio::test]
     async fn send_email_sends_the_expected_request() {
         // Arrange
         let mock_server = MockServer::start().await;
-        let sender = SubscriberEmail::parse(SafeEmail().fake::<String>()).unwrap();
-        let email_client = EmailClient::new(mock_server.uri(), sender, Secret::new(Faker.fake()));
+        let email_client = email_client(mock_server.uri().as_str());
 
         struct SendEmailBodyMatcher;
 
@@ -118,9 +137,9 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let subscriber_email = SubscriberEmail::parse(SafeEmail().fake::<String>()).unwrap();
-        let subject: String = Sentence(1..2).fake();
-        let content: String = Sentence(1..10).fake();
+        let subscriber_email = email();
+        let subject: String = subject();
+        let content: String = content();
 
         // Act
         let outcome = email_client
@@ -136,11 +155,10 @@ mod tests {
     async fn send_email_fails_if_the_server_returns_500() {
         // Arrange
         let mock_server = MockServer::start().await;
-        let sender = SubscriberEmail::parse(SafeEmail().fake::<String>()).unwrap();
-        let email_client = EmailClient::new(mock_server.uri(), sender, Secret::new(Faker.fake()));
+        let email_client = email_client(mock_server.uri().as_str());
 
-        let subscriber_email = SubscriberEmail::parse(SafeEmail().fake::<String>()).unwrap();
-        let subject: String = Sentence(1..2).fake();
+        let subscriber_email = email();
+        let subject: String = subject();
         let content: String = Paragraph(1..10).fake();
 
         Mock::given(any())
@@ -163,12 +181,11 @@ mod tests {
     async fn send_email_times_out_if_the_server_takes_too_long() {
         // Arrange
         let mock_server = MockServer::start().await;
-        let sender = SubscriberEmail::parse(SafeEmail().fake::<String>()).unwrap();
-        let email_client = EmailClient::new(mock_server.uri(), sender, Secret::new(Faker.fake()));
+        let email_client = email_client(mock_server.uri().as_str());
 
         let subscriber_email = SubscriberEmail::parse(SafeEmail().fake::<String>()).unwrap();
-        let subject: String = Sentence(1..2).fake();
-        let content: String = Paragraph(1..10).fake();
+        let subject: String = subject();
+        let content: String = content();
 
         let response = ResponseTemplate::new(200)
             // 3 minutes!
