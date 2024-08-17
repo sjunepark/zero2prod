@@ -17,6 +17,7 @@ serde = { version = "1.0.207", features = ["derive"] }
 serde-aux = "4.5.0"
 unicode-segmentation = "1.11.0"
 unicode_categories = "0.1.1"
+validator = { version = "0.18.1", features = ["derive"] }
 
 config = "0.14.0"
 tracing = { version = "0.1.40", features = ["log"] }
