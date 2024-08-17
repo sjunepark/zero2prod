@@ -7,7 +7,7 @@ watch:
     cargo watch -q -c -s 'just test'
 
 test:
-    TEST_LOG=true cargo test --all-features | bunyan
+    cargo test --all-features | bunyan
 
 format:
     cargo fmt --all
