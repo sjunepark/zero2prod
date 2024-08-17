@@ -4,7 +4,10 @@ default:
     just -l
 
 watch:
-    cargo watch -q -c -s 'just test'
+    cargo watch -q -c -s 'just check'
+
+check:
+    cargo check --all-features
 
 test:
     cargo test --all-features | bunyan
