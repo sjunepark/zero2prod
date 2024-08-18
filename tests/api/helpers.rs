@@ -44,12 +44,12 @@ pub async fn spawn_app() -> TestApp {
     let application = Application::build(configuration.clone())
         .await
         .expect("Failed to build application.");
-
-    let address = format!("http://127.0.0.1:{}", application.port());
+    let application_port = application.port();
     tokio::spawn(application.run_until_stopped());
 
     TestApp {
-        address,
+        address: format!("http://localhost:{}", application_port),
+        port: application_port,
         db_pool,
         email_server,
     }
@@ -57,6 +57,10 @@ pub async fn spawn_app() -> TestApp {
 
 pub struct TestApp {
     pub address: String,
+    /// This is necessary because in test environments,
+    /// an application url can be used to send requests before a test server is started.
+    /// This is a non-issue for production workloads where the DNS domain is enough.
+    pub port: u16,
     pub db_pool: PgPool,
     pub email_server: MockServer,
 }

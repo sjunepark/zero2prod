@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 use crate::domain::NewSubscriber;
 use crate::email_client::EmailClient;
+use crate::startup::ApplicationBaseUrl;
 
 #[instrument(
     name = "Adding a new subscriber.",
@@ -20,6 +21,7 @@ pub async fn subscribe(
     form: web::Form<FormData>,
     pool: web::Data<PgPool>,
     email_client: web::Data<EmailClient>,
+    base_url: web::Data<ApplicationBaseUrl>,
 ) -> impl Responder {
     let new_subscriber = match form.0.try_into() {
         Ok(new_subscriber) => new_subscriber,
@@ -38,7 +40,7 @@ pub async fn subscribe(
         return HttpResponse::InternalServerError().finish();
     }
 
-    if let Err(e) = send_confirmation_email(&email_client, &new_subscriber).await {
+    if let Err(e) = send_confirmation_email(&email_client, &new_subscriber, &base_url).await {
         error!(
             error.cause_chain = ?e,
             error.message = %e,
@@ -56,8 +58,12 @@ pub async fn subscribe(
 pub async fn send_confirmation_email(
     email_client: &EmailClient,
     new_subscriber: &NewSubscriber,
+    base_url: &ApplicationBaseUrl,
 ) -> Result<(), reqwest::Error> {
-    let confirmation_link = "https://there-is-no-such-domain.com/subscriptions/confirm";
+    let confirmation_link = format!(
+        "{}/subscriptions/confirm?subscription_token=mytoken",
+        base_url.0
+    );
     let plain_body = format!(
         "Welcome to the newsletter, {}! Click here to confirm your subscription: {}",
         new_subscriber.name, confirmation_link
@@ -83,7 +89,7 @@ pub async fn insert_subscriber(
     sqlx::query!(
         r#"
     INSERT INTO subscriptions (id, email, name, subscribed_at, status)
-    VALUES ($1, $2, $3, $4, 'confirmed')
+    VALUES ($1, $2, $3, $4, 'pending_confirmation')
     "#,
         Uuid::new_v4(),
         new_subscriber.email.as_ref(),
