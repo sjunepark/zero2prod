@@ -1,7 +1,8 @@
+use derive_more::Display;
 use unicode_categories::UnicodeCategories;
 use unicode_segmentation::UnicodeSegmentation;
 
-#[derive(Debug)]
+#[derive(Debug, Display)]
 pub struct SubscriberName(String);
 
 impl SubscriberName {
@@ -34,6 +35,8 @@ impl AsRef<str> for SubscriberName {
 #[cfg(test)]
 mod tests {
     use claims::{assert_err, assert_ok};
+    use fake::faker::name::en::Name;
+    use fake::Fake;
 
     use crate::domain::SubscriberName;
 
@@ -68,5 +71,12 @@ mod tests {
     fn a_valid_name_is_parsed_successfully() {
         let name = "Ursula Le Guin";
         assert_ok!(SubscriberName::parse(name));
+    }
+
+    #[test]
+    fn subscriber_name_display_should_be_equal_to_original_string() {
+        let name: String = Name().fake();
+        let subscriber_name = SubscriberName::parse(&name).unwrap();
+        assert_eq!(name, subscriber_name.to_string());
     }
 }
