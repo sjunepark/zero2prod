@@ -21,10 +21,13 @@ lint:
 init-db:
     ./scripts/init_db.sh
 
-migrate-db:
+migrate-add description:
+    sqlx migrate add -r {{description}}
+
+migrate-local:
     sqlx migrate run
 
-migrate-db-revert:
+migrate-local-revert:
     sqlx migrate revert
 
 sqlx-prepare:
@@ -36,5 +39,5 @@ docker-build: sqlx-prepare
 doctl-update: sqlx-prepare
     doctl apps update $DO_APP_ID --spec spec.yaml
 
-do-migrate:
+migrate-do:
     DATABASE_URL=$DO_DATABASE_URL sqlx migrate run
