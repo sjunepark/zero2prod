@@ -2,10 +2,11 @@ use actix_web::{web, HttpResponse, Responder};
 use chrono::Utc;
 use serde::Deserialize;
 use sqlx::PgPool;
-use tracing::instrument;
+use tracing::{error, info, instrument};
 use uuid::Uuid;
 
 use crate::domain::NewSubscriber;
+use crate::email_client::EmailClient;
 
 #[instrument(
     name = "Adding a new subscriber.",
@@ -15,16 +16,45 @@ use crate::domain::NewSubscriber;
         subscriber_name = %form.name
     )
 )]
-pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> impl Responder {
+pub async fn subscribe(
+    form: web::Form<FormData>,
+    pool: web::Data<PgPool>,
+    email_client: web::Data<EmailClient>,
+) -> impl Responder {
     let new_subscriber = match form.0.try_into() {
         Ok(new_subscriber) => new_subscriber,
-        Err(_) => return HttpResponse::BadRequest().finish(),
+        Err(_) => {
+            error!("Failed to parse the form data.");
+            return HttpResponse::BadRequest().finish();
+        }
     };
 
-    match insert_subscriber(&new_subscriber, &pool).await {
-        Ok(_) => HttpResponse::Ok().finish(),
-        Err(_) => HttpResponse::InternalServerError().finish(),
+    if let Err(e) = insert_subscriber(&new_subscriber, &pool).await {
+        error!(
+            error.cause_chain = ?e,
+            error.message = %e,
+            "Failed to store new subscriber in the database."
+        );
+        return HttpResponse::InternalServerError().finish();
     }
+
+    if let Err(e) = email_client
+        .send_email(
+            new_subscriber.email,
+            "Welcome!",
+            "Welcome to the newsletter!",
+            "Welcome to the newsletter!",
+        )
+        .await
+    {
+        error!(
+            error.cause_chain = ?e,
+            error.message = %e,
+            "Failed to send a confirmation email.");
+        return HttpResponse::InternalServerError().finish();
+    }
+
+    HttpResponse::Ok().finish()
 }
 
 #[instrument(
@@ -48,11 +78,11 @@ pub async fn insert_subscriber(
     .execute(pool)
     .await
     .map(|result| {
-        tracing::info!("New subscriber details have been saved.");
+        info!("New subscriber details have been saved.");
         result
     })
     .map_err(|e| {
-        tracing::error!("Failed to execute query: {:?}", e);
+        error!("Failed to execute query: {:?}", e);
         e
     })?;
     Ok(())

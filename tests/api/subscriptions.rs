@@ -1,18 +1,29 @@
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, ResponseTemplate};
+
 use crate::helpers;
 
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
     // Arrange
-    let test_app = helpers::spawn_app().await;
+    let app = helpers::spawn_app().await;
+    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
+
+    Mock::given(path("/email"))
+        .and(method("POST"))
+        .respond_with(ResponseTemplate::new(200))
+        .expect(1)
+        .mount(&app.email_server)
+        .await;
 
     // Act
-    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
-    let response = test_app.post_subscriptions(body).await;
+    let response = app.post_subscriptions(body).await;
+
     // Assert
     assert_eq!(200, response.status().as_u16());
 
     let saved = sqlx::query!("SELECT email, name FROM subscriptions",)
-        .fetch_one(&test_app.db_pool)
+        .fetch_one(&app.db_pool)
         .await
         .expect("Failed to fetch saved subscription.");
 
@@ -23,7 +34,7 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
 #[tokio::test]
 async fn subscribe_returns_a_400_when_fields_are_present_but_empty() {
     // Arrange
-    let test_app = helpers::spawn_app().await;
+    let app = helpers::spawn_app().await;
 
     let test_cases = vec![
         ("name=&email=ursula_le_guin%40gmail.com", "empty name"),
@@ -33,7 +44,7 @@ async fn subscribe_returns_a_400_when_fields_are_present_but_empty() {
 
     for (body, description) in test_cases {
         // Act
-        let response = test_app.post_subscriptions(body).await;
+        let response = app.post_subscriptions(body).await;
 
         // Assert
         assert_eq!(
@@ -48,7 +59,7 @@ async fn subscribe_returns_a_400_when_fields_are_present_but_empty() {
 #[tokio::test]
 async fn subscribe_returns_a_400_when_data_is_missing() {
     // Arrange
-    let test_app = helpers::spawn_app().await;
+    let app = helpers::spawn_app().await;
 
     let test_cases = vec![
         ("name=le%20guin", "missing the email"),
@@ -58,7 +69,7 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
 
     for (invalid_body, error_message) in test_cases {
         // Act
-        let response = test_app.post_subscriptions(invalid_body).await;
+        let response = app.post_subscriptions(invalid_body).await;
 
         // Assert
         assert_eq!(
@@ -68,4 +79,24 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
             error_message
         );
     }
+}
+
+#[tokio::test]
+async fn subscribe_sends_a_confirmation_email_for_valid_data() {
+    // Arrange
+    let app = helpers::spawn_app().await;
+    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
+
+    Mock::given(method("POST"))
+        .and(path("/email"))
+        .respond_with(ResponseTemplate::new(200))
+        .expect(1)
+        .mount(&app.email_server)
+        .await;
+
+    // Act
+    app.post_subscriptions(body).await;
+
+    // Assert
+    // Mock asserts on drop
 }

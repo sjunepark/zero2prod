@@ -1,15 +1,18 @@
 use reqwest::Client;
 use secrecy::{ExposeSecret, Secret};
 use serde::Serialize;
+use tracing::{info, instrument};
 
 use crate::domain::SubscriberEmail;
 
+#[derive(Debug)]
 pub struct EmailClient {
     http_client: Client,
     base_url: String,
     sender: SubscriberEmail,
     authorization_token: Secret<String>,
 }
+
 impl EmailClient {
     pub fn new(
         base_url: String,
@@ -27,6 +30,7 @@ impl EmailClient {
         }
     }
 
+    #[instrument(skip(self))]
     pub async fn send_email(
         &self,
         recipient: SubscriberEmail,
@@ -38,13 +42,13 @@ impl EmailClient {
         let request_body = SendEmailRequest {
             from: self.sender.as_ref(),
             to: recipient.as_ref(),
-            subject: subject,
+            subject,
             html_body: html_content,
             text_body: text_content,
         };
 
         // todo: check response
-        let _ = self
+        let response = self
             .http_client
             .post(url)
             .header(
@@ -55,6 +59,8 @@ impl EmailClient {
             .send()
             .await?
             .error_for_status()?;
+
+        info!(response=?response, "Sent email");
         Ok(())
     }
 }
