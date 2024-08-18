@@ -45,5 +45,5 @@ migrate-do:
 migrate-do-revert:
     DATABASE_URL=$DO_DATABASE_URL sqlx migrate revert
 
-git-push: sqlx-prepare
+git-push: sqlx-prepare test
     git push
