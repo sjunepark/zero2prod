@@ -41,3 +41,6 @@ doctl-update: sqlx-prepare
 
 migrate-do:
     DATABASE_URL=$DO_DATABASE_URL sqlx migrate run
+
+git-push: sqlx-prepare
+    git push
