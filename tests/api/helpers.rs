@@ -38,12 +38,13 @@ pub async fn spawn_app() -> TestApp {
         .email_client
         .sender()
         .expect("Invalid sender email address.");
-    let auth_token = configuration.email_client.authorization_token;
+    let timeout = configuration.email_client.timeout();
 
     let email_client = zero2prod::email_client::EmailClient::new(
         configuration.email_client.base_url,
         sender_email,
-        auth_token,
+        configuration.email_client.authorization_token,
+        timeout,
     );
 
     let server = zero2prod::startup::run(listener, connection_pool.clone(), email_client)

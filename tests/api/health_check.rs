@@ -1,8 +1,8 @@
-pub mod utils;
+use crate::helpers;
 
 #[tokio::test]
 async fn health_check_works() {
-    let test_app = utils::spawn_app().await;
+    let test_app = helpers::spawn_app().await;
     let client = reqwest::Client::new();
 
     let response = client

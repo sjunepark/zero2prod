@@ -1,9 +1,9 @@
-pub mod utils;
+use crate::helpers;
 
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
     // Arrange
-    let test_app = utils::spawn_app().await;
+    let test_app = helpers::spawn_app().await;
     let client = reqwest::Client::new();
 
     // Act
@@ -31,7 +31,7 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
 #[tokio::test]
 async fn subscribe_returns_a_400_when_fields_are_present_but_empty() {
     // Arrange
-    let test_app = utils::spawn_app().await;
+    let test_app = helpers::spawn_app().await;
     let client = reqwest::Client::new();
 
     let test_cases = vec![
@@ -63,7 +63,7 @@ async fn subscribe_returns_a_400_when_fields_are_present_but_empty() {
 #[tokio::test]
 async fn subscribe_returns_a_400_when_data_is_missing() {
     // Arrange
-    let test_app = utils::spawn_app().await;
+    let test_app = helpers::spawn_app().await;
     let client = reqwest::Client::new();
 
     let test_cases = vec![
