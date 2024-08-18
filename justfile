@@ -32,6 +32,7 @@ migrate-local-revert:
 
 sqlx-prepare:
     cargo sqlx prepare --workspace
+    git diff --exit-code || (echo "Error: sqlx prepare made changes to the code. Please commit them before continuing." && exit 1)
 
 docker-build: sqlx-prepare
     docker build -t zero2prod --file Dockerfile .
