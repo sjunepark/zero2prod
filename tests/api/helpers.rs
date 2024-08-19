@@ -76,6 +76,32 @@ impl TestApp {
             .await
             .expect("Failed to execute request.")
     }
+
+    pub fn get_confirmation_links(&self, email_request: &wiremock::Request) -> ConfirmationLinks {
+        let body: serde_json::Value = serde_json::from_slice(&email_request.body).unwrap();
+
+        let get_link = |s: &str| {
+            let links: Vec<_> = linkify::LinkFinder::new()
+                .kinds(&[linkify::LinkKind::Url])
+                .links(s)
+                .collect();
+            assert_eq!(1, links.len());
+            let raw_link = links[0].as_str().to_owned();
+            let mut confirmation_link = reqwest::Url::parse(&raw_link).unwrap();
+
+            // Let's make sure we don't call random APIs on the web
+            assert_eq!("localhost", confirmation_link.host_str().unwrap());
+            // In the test environment, without the line below,
+            // a request can be made without a port being specified.
+            // This is a non-issue for production workloads where the DNS domain is enough.
+            confirmation_link.set_port(Some(self.port)).unwrap();
+            confirmation_link
+        };
+
+        let html = get_link(&body["HtmlBody"].as_str().unwrap());
+        let plain_text = get_link(&body["TextBody"].as_str().unwrap());
+        ConfirmationLinks { html, plain_text }
+    }
 }
 
 async fn configure_database(config: &DatabaseSettings) -> PgPool {
@@ -96,4 +122,9 @@ async fn configure_database(config: &DatabaseSettings) -> PgPool {
         .expect("Failed to migrate the database.");
 
     connection_pool
+}
+
+pub struct ConfirmationLinks {
+    pub html: reqwest::Url,
+    pub plain_text: reqwest::Url,
 }
