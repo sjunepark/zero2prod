@@ -31,8 +31,20 @@ migrate-local-revert:
     sqlx migrate revert
 
 sqlx-prepare:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Run sqlx prepare
     cargo sqlx prepare --workspace
-    git diff --exit-code || (echo "Error: sqlx prepare made changes to the code. Please commit them before continuing." && exit 1)
+
+    # Check if there are any changes after running sqlx prepare
+    if [[ -n $(git status --porcelain) ]]; then
+        echo "Error: sqlx prepare made changes to the code. Please review and commit these changes before continuing."
+        git status --short
+        exit 1
+    else
+        echo "sqlx prepare completed successfully with no changes to commit."
+    fi
 
 docker-build: sqlx-prepare
     docker build -t zero2prod --file Dockerfile .
