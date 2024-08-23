@@ -1,5 +1,10 @@
 set dotenv-filename := ".env"
 
+# For development
+
+git-push: sqlx-prepare test doctl-update
+    git push
+
 default:
     just -l
 
@@ -18,17 +23,10 @@ format:
 lint:
     cargo clippy -q --all-targets --all-features
 
+# Manual database operations
+
 init-db:
     ./scripts/init_db.sh
-
-migrate-add description:
-    sqlx migrate add -r {{description}}
-
-migrate-local:
-    sqlx migrate run
-
-migrate-local-revert:
-    sqlx migrate revert
 
 sqlx-prepare:
     #!/usr/bin/env bash
@@ -46,6 +44,20 @@ sqlx-prepare:
         echo "sqlx prepare completed successfully with no changes to commit."
     fi
 
+migrate-add description:
+    sqlx migrate add -r {{description}}
+
+migrate-local:
+    sqlx migrate run
+
+migrate-local-revert:
+    sqlx migrate revert
+
+migrate-do-revert:
+    DATABASE_URL=$DO_DATABASE_URL sqlx migrate revert
+
+# Deployment related operations
+
 docker-build: sqlx-prepare
     docker build -t zero2prod --file Dockerfile .
 
@@ -54,9 +66,3 @@ doctl-update: sqlx-prepare
 
 migrate-do:
     DATABASE_URL=$DO_DATABASE_URL sqlx migrate run
-
-migrate-do-revert:
-    DATABASE_URL=$DO_DATABASE_URL sqlx migrate revert
-
-git-push: sqlx-prepare test doctl-update
-    git push
