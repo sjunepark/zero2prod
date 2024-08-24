@@ -15,9 +15,7 @@ check:
     cargo check --all-features --all-targets
 
 test:
-    export RUST_LOG="sqlx=error,info"
-    export TEST_LOG=true
-    cargo test --all-features
+    RUST_LOG="sqlx=error,info" cargo test --all-features
 
 format:
     cargo fmt --all
