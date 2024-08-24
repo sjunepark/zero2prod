@@ -36,8 +36,7 @@ pub async fn subscribe(
         Ok(transaction) => transaction,
         Err(e) => {
             error!(
-                error.cause_chain = ?e,
-                error.message = %e,
+                error = ?e,
                 "Failed to create a new database transaction."
             );
             return HttpResponse::InternalServerError().finish();
@@ -48,8 +47,7 @@ pub async fn subscribe(
         Ok(subscriber_id) => subscriber_id,
         Err(e) => {
             error!(
-                error.cause_chain = ?e,
-                error.message = %e,
+                error = ?e,
                 "Failed to store new subscriber in the database."
             );
             return HttpResponse::InternalServerError().finish();
@@ -60,8 +58,7 @@ pub async fn subscribe(
 
     if let Err(e) = store_token(&mut transaction, subscriber_id, &subscription_token).await {
         error!(
-            error.cause_chain = ?e,
-            error.message = %e,
+            error = ?e,
             "Failed to store subscription token in the database."
         );
         return HttpResponse::InternalServerError().finish();
@@ -69,8 +66,7 @@ pub async fn subscribe(
 
     if let Err(e) = transaction.commit().await {
         error!(
-            error.cause_chain = ?e,
-            error.message = %e,
+            error = ?e,
             "Failed to commit SQL transaction."
         );
         return HttpResponse::InternalServerError().finish();
@@ -85,8 +81,7 @@ pub async fn subscribe(
     .await
     {
         error!(
-            error.cause_chain = ?e,
-            error.message = %e,
+            error = ?e,
             "Failed to send a confirmation email.");
         return HttpResponse::InternalServerError().finish();
     }
@@ -109,10 +104,7 @@ async fn store_token(
         subscriber_id
     );
 
-    transaction.execute(query).await.map_err(|e| {
-        error!("Failed to execute query: {:?}", e);
-        e
-    })?;
+    transaction.execute(query).await?;
     Ok(())
 }
 

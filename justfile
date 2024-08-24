@@ -15,7 +15,9 @@ check:
     cargo check --all-features --all-targets
 
 test:
-    cargo test --all-features | bunyan
+    export RUST_LOG="sqlx=error,info"
+    export TEST_LOG=true
+    cargo test --all-features
 
 format:
     cargo fmt --all

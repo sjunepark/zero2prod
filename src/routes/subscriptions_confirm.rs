@@ -10,8 +10,7 @@ pub async fn confirm(params: web::Query<Parameters>, pool: web::Data<PgPool>) ->
         Ok(id) => id,
         Err(e) => {
             error!(
-                error.cause_chain = ?e,
-                error.message = %e,
+                error = ?e,
                 "Failed to retrieve subscriber ID from the database."
             );
             return HttpResponse::InternalServerError().finish();
@@ -23,8 +22,7 @@ pub async fn confirm(params: web::Query<Parameters>, pool: web::Data<PgPool>) ->
         Some(subscriber_id) => {
             if let Err(e) = confirm_subscriber(&pool, subscriber_id).await {
                 error!(
-                    error.cause_chain = ?e,
-                    error.message = %e,
+                    error = ?e,
                     "Failed to confirm subscriber in the database."
                 );
                 return HttpResponse::InternalServerError().finish();
