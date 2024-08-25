@@ -15,10 +15,10 @@ check:
     cargo check --all-features --all-targets
 
 test:
-    RUST_LOG="sqlx=error,zero2prod=info" cargo test --all-features | bunyan
+    RUST_LOG="sqlx=error,warn" cargo test --all-features
 
 test-scoped target:
-    RUST_LOG="sqlx=error,info" cargo test {{target}} | bunyan
+    RUST_LOG="sqlx=error,info" cargo test {{target}}
 
 format:
     cargo fmt --all
