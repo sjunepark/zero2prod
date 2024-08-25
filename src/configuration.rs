@@ -2,6 +2,7 @@ use secrecy::{ExposeSecret, Secret};
 use serde::Deserialize;
 use sqlx::postgres::{PgConnectOptions, PgSslMode};
 use sqlx::ConnectOptions;
+use tracing::log::LevelFilter;
 
 use crate::domain::SubscriberEmail;
 
@@ -57,7 +58,7 @@ pub struct DatabaseSettings {
 impl DatabaseSettings {
     pub fn with_db(&self) -> PgConnectOptions {
         let options = self.without_db().database(&self.database_name);
-        options.log_statements(tracing_log::log::LevelFilter::Trace)
+        options.log_statements(LevelFilter::Trace)
     }
 
     pub fn without_db(&self) -> PgConnectOptions {

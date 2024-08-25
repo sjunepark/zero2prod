@@ -9,13 +9,16 @@ default:
     just -l
 
 watch:
-    cargo watch -q -c -s 'just test'
+    cargo watch -q -s -c -s 'just test'
 
 check:
     cargo check --all-features --all-targets
 
 test:
-    RUST_LOG="sqlx=error,info" cargo test --all-features
+    RUST_LOG="sqlx=error,zero2prod=info" cargo test --all-features | bunyan
+
+test-scoped target:
+    RUST_LOG="sqlx=error,info" cargo test {{target}} | bunyan
 
 format:
     cargo fmt --all

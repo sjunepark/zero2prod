@@ -1,8 +1,10 @@
 use tracing::subscriber::set_global_default;
 use tracing::Subscriber;
+use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_log::LogTracer;
-use tracing_subscriber::field::MakeExt;
-use tracing_subscriber::EnvFilter;
+use tracing_subscriber::fmt::MakeWriter;
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::{fmt, EnvFilter, Registry};
 
 /// Compose multiple layers into a `tracing`'s subscriber.
 ///
@@ -14,12 +16,26 @@ use tracing_subscriber::EnvFilter;
 /// We need to explicitly call out that the returned subscriber is
 /// `Send` and `Sync` to make it possible to pass it to `init_subscriber`
 /// later on.
-pub fn get_subscriber() -> impl Subscriber + Send + Sync {
-    tracing_subscriber::fmt()
-        .map_fmt_fields(|f| f.debug_alt())
-        .with_test_writer()
-        .with_env_filter(EnvFilter::from_default_env())
-        .finish()
+pub fn get_subscriber<Sink>(
+    name: String,
+    env_filter: String,
+    sink: Sink,
+) -> impl Subscriber + Send + Sync
+where
+    for<'a> Sink: MakeWriter<'a> + Send + Sync + 'static,
+{
+    let env_filter =
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(env_filter));
+    let test_writer_layer = fmt::layer().with_test_writer();
+    let formatting_layer = BunyanFormattingLayer::new(name, sink);
+    Registry::default()
+        .with(env_filter)
+        .with(JsonStorageLayer)
+        .with(formatting_layer)
+        // This conflicts with the formatting layer,
+        // since both are trying to designate a writer.
+        // As so, it has to be set after the formatting layer
+        .with(test_writer_layer)
 }
 
 /// Register a subscriber as global default to process span data.
