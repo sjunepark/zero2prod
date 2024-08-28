@@ -1,6 +1,7 @@
 use std::sync::LazyLock;
 
-use sha3::Digest;
+use argon2::password_hash::SaltString;
+use argon2::{Argon2, PasswordHasher};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Executor, PgPool};
 use uuid::Uuid;
@@ -153,8 +154,11 @@ impl TestUser {
     }
 
     async fn store(&self, pool: &PgPool) {
-        let password_hash = sha3::Sha3_256::digest(self.password.as_bytes());
-        let password_hash = format!("{:x}", password_hash);
+        let salt = SaltString::generate(&mut rand::thread_rng());
+        let password_hash = Argon2::default()
+            .hash_password(self.password.as_bytes(), &salt)
+            .unwrap()
+            .to_string();
         sqlx::query!(
             r#"INSERT into users (user_id, username, password_hash) VALUES ($1, $2, $3)"#,
             self.user_id,
