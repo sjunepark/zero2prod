@@ -176,25 +176,12 @@ async fn validate_credentials(
     credentials: Credentials,
     pool: &PgPool,
 ) -> Result<uuid::Uuid, PublishError> {
-    let row: Option<_> = sqlx::query!(
-        r#"SELECT users.user_id, users.password_hash FROM users WHERE username = $1"#,
-        credentials.username
-    )
-    .fetch_optional(pool)
-    .await
-    .context("Failed to perform a query to validate the credentials.")
-    .map_err(PublishError::UnexpectedError)?;
+    let (user_id, expected_password_hash) = get_stored_credentials(&credentials.username, pool)
+        .await
+        .map_err(PublishError::UnexpectedError)?
+        .ok_or_else(|| PublishError::AuthError(anyhow::anyhow!("Unknown username.")))?;
 
-    let (expected_password_hash, user_id) = match row {
-        Some(row) => (row.password_hash, row.user_id),
-        None => {
-            return Err(PublishError::AuthError(anyhow::anyhow!(
-                "Unknown username."
-            )))
-        }
-    };
-
-    let expected_password_hash = PasswordHash::new(&expected_password_hash)
+    let expected_password_hash = PasswordHash::new(expected_password_hash.expose_secret())
         .map_err(|e| anyhow::anyhow!(e))
         .context("Failed to parse the stored password hash.")
         .map_err(PublishError::UnexpectedError)?;
